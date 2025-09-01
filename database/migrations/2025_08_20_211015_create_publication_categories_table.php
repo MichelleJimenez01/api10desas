@@ -13,6 +13,17 @@ return new class extends Migration
     {
         Schema::create('publication_categories', function (Blueprint $table) {
             $table->id();
+
+             // Relación con publications (usando id estándar)
+            $table->foreignId('publication_id')
+                  ->constrained() // Laravel automáticamente usará el id estándar
+                  ->cascadeOnDelete();
+            
+            // Relación con categories (usando id estándar)
+            $table->foreignId('category_id')
+                  ->constrained() // Laravel automáticamente usará el id estándar
+                  ->cascadeOnDelete();
+
             $table->timestamps();
         });
     }
