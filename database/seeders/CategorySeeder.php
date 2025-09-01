@@ -16,7 +16,7 @@ class CategorySeeder extends Seeder
             ['type_publication' => 'Inundación'],
             ['type_publication' => 'Otros']
         ];
-//-- git reset --soft HEAD
+
         foreach ($categories as $category) {
             Category::create($category);
         }

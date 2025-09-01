@@ -74,7 +74,7 @@ class Category extends Model
             }
         }
     }
-//--
+
     public function scopeGetOrPaginate(Builder $query)
     {
         if (request('perPage')) {
