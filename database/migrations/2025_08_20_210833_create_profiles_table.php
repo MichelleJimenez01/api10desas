@@ -11,10 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('profiles', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+       Schema::create('profiles', function (Blueprint $table) {
+        $table->id();
+        $table->string('password');
+        $table->string('photo')->default('default.jpg');
+        $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+        $table->foreignId('role_id')->constrained('roles')->cascadeOnDelete();
+        $table->timestamps();
+    });
     }
 
     /**
