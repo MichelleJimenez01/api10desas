@@ -14,13 +14,23 @@ class MessageSeeder extends Seeder
             'is_read' => false,
             'sender_profile_id' => 1,
             'receiver_profile_id' => 2,
+            'profile_id' => 1,
         ]);
 
         Message::create([
-            'content' => 'Todo bien, ¿y tú?',
-            'is_read' => true,
+            'content' => 'Todo bien, gracias. ¿Y tú?',
+            'is_read' => false,
             'sender_profile_id' => 2,
             'receiver_profile_id' => 1,
+            'profile_id' => 2,
+        ]);
+
+        Message::create([
+            'content' => 'Estoy probando el chat en tiempo real con Ably 🚀',
+            'is_read' => true,
+            'sender_profile_id' => 1,
+            'receiver_profile_id' => 2,
+            'profile_id' => 1,
         ]);
     }
 }

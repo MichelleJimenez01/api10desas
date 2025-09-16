@@ -3,64 +3,56 @@
 namespace App\Http\Controllers;
 
 use App\Models\Notification;
-use App\Http\Requests\StoreNotificationRequest;
-use App\Http\Requests\UpdateNotificationRequest;
+use Illuminate\Http\Request;
+use Ably\AblyRest;
 
 class NotificationController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $notifications = Notification::included()->filter()->sort()->paginateCustom();
+        return response()->json($notifications);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function store(Request $request)
     {
-        //
+        $request->validate([
+            'event_notification' => 'required|string',
+            'publication_id' => 'required|integer|exists:publications,publication_id',
+        ]);
+
+        $notification = Notification::create([
+            'event_notification' => $request->event_notification,
+            'publication_id' => $request->publication_id,
+        ]);
+
+        // 🔴 Publicar en Ably
+        $ably = new AblyRest(config('services.ably.key'));
+        $channel = $ably->channel('notifications');
+        $channel->publish('new-notification', $notification);
+
+        return response()->json($notification, 201);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreNotificationRequest $request)
+    public function show($id)
     {
-        //
+        $notification = Notification::included()->findOrFail($id);
+        return response()->json($notification);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Notification $notification)
+    public function update(Request $request, $id)
     {
-        //
+        $notification = Notification::findOrFail($id);
+        $notification->update($request->only(['event_notification']));
+
+        return response()->json($notification);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Notification $notification)
+    public function destroy($id)
     {
-        //
-    }
+        $notification = Notification::findOrFail($id);
+        $notification->delete();
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateNotificationRequest $request, Notification $notification)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Notification $notification)
-    {
-        //
+        return response()->json(null, 204);
     }
 }

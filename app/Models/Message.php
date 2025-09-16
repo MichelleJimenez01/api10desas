@@ -2,96 +2,102 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
 
 class Message extends Model
 {
     use HasFactory;
 
+    protected $primaryKey = 'message_id';
+
     protected $fillable = [
         'content',
         'is_read',
         'sender_profile_id',
-        'receiver_profile_id'
+        'receiver_profile_id',
+        'profile_id'
     ];
 
-    // Listas blancas (mismo patrón que Profile)
-    protected $allowIncluded = ['sender', 'receiver'];
-    protected $allowFilter   = ['id', 'content', 'is_read', 'sender_profile_id', 'receiver_profile_id'];
-    protected $allowSort     = ['id', 'content', 'is_read', 'sender_profile_id', 'receiver_profile_id', 'created_at', 'updated_at'];
+    // Listas blancas
+    protected $allowIncluded = ['sender', 'receiver', 'profile'];
+    protected $allowFilter = ['message_id', 'content', 'is_read'];
+    protected $allowSort = ['message_id', 'created_at'];
+    protected $allowPagination = 10;
 
-    /* ---------- RELACIONES ---------- */
+    // Relaciones
     public function sender()
     {
-        return $this->belongsTo(Profile::class, 'sender_profile_id');
+        return $this->belongsTo(Profile::class, 'sender_profile_id', 'id_role_user');
     }
 
     public function receiver()
     {
-        return $this->belongsTo(Profile::class, 'receiver_profile_id');
+        return $this->belongsTo(Profile::class, 'receiver_profile_id', 'id_role_user');
     }
 
-    /* ---------- SCOPES (mismo patrón que Profile) ---------- */
+    public function profile()
+    {
+        return $this->belongsTo(Profile::class, 'profile_id', 'id_role_user');
+    }
+
+    // 📌 Scope: incluir relaciones
     public function scopeIncluded(Builder $query)
     {
-        if (empty($this->allowIncluded) || empty(request('include'))) return;
+        if (empty(request('include'))) {
+            return;
+        }
 
         $relations = explode(',', request('include'));
-        $allowIncluded = collect($this->allowIncluded);
 
-        foreach ($relations as $key => $relation) {
-            if (!$allowIncluded->contains($relation)) unset($relations[$key]);
-        }
+        $allowRelations = collect($relations)->filter(function ($relation) {
+            return in_array($relation, $this->allowIncluded);
+        })->all();
 
-        $query->with($relations);
+        return $query->with($allowRelations);
     }
 
+    // 📌 Scope: filtros
     public function scopeFilter(Builder $query)
     {
-        if (empty($this->allowFilter) || empty(request('filter'))) return;
+        if (empty(request('filter'))) {
+            return;
+        }
 
-        $filters = request('filter');
-        $allowFilter = collect($this->allowFilter);
-
-        foreach ($filters as $field => $value) {
-            if ($allowFilter->contains($field)) {
-                // Para campos booleanos y IDs usar igualdad exacta
-                if (in_array($field, ['is_read', 'sender_profile_id', 'receiver_profile_id', 'id'])) {
-                    $query->where($field, $value);
-                } else {
-                    $query->where($field, 'LIKE', "%$value%");
-                }
+        foreach (request('filter') as $field => $value) {
+            if (in_array($field, $this->allowFilter)) {
+                $query->where($field, 'LIKE', "%$value%");
             }
         }
     }
 
+    // 📌 Scope: ordenamiento
     public function scopeSort(Builder $query)
     {
-        if (empty($this->allowSort) || empty(request('sort'))) return;
+        if (empty(request('sort'))) {
+            return;
+        }
 
         $sortFields = explode(',', request('sort'));
-        $allowSort = collect($this->allowSort);
 
-        foreach ($sortFields as $field) {
+        foreach ($sortFields as $sortField) {
             $direction = 'asc';
-            if (str_starts_with($field, '-')) {
+            if (substr($sortField, 0, 1) === '-') {
                 $direction = 'desc';
-                $field = substr($field, 1);
+                $sortField = substr($sortField, 1);
             }
-            if ($allowSort->contains($field)) {
-                $query->orderBy($field, $direction);
+
+            if (in_array($sortField, $this->allowSort)) {
+                $query->orderBy($sortField, $direction);
             }
         }
     }
 
-    public function scopeGetOrPaginate(Builder $query)
+    // 📌 Scope: paginación
+    public function scopePaginateCustom(Builder $query)
     {
-        if (request('perPage')) {
-            $perPage = intval(request('perPage'));
-            if ($perPage > 0) return $query->paginate($perPage);
-        }
-        return $query->get();
+        $perPage = request('per_page') ?? $this->allowPagination;
+        return $query->paginate($perPage);
     }
 }
