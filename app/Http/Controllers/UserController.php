@@ -17,18 +17,18 @@ class UserController extends Controller
       //  $users = User::included()->filter()->sort()->getOrPaginate();
        // return response()->json($users);
     
-        return response()->json (User::all());
+        // return response()->json (User::all());
         //return response()->json(User::all(), 200);
-       // $users = User::included()->filter()->get();
+    //    $users = User::included()->filter()->get();
        // return response()->json($users);
         // Recupera todos los usuarios con relaciones incluidas
-        // $users = User::included()->get();
+        $users = User::included()->get();
 
         // Aplica filtros si están definidos en la query y vuelve a obtener usuarios
-       // $users = User::included()->filter()->get();
+    //    $users = User::included()->filter()->get();
 
         // Retorna la lista de usuarios en formato JSON
-       //return response()->json($users);
+       return response()->json($users);
 
        
     }

@@ -10,10 +10,10 @@ class ProfileController extends Controller
     
     public function index()
     {
-        $profiles = Profile::included()
-            ->filter()
-            ->sort()
-            ->getOrPaginate();
+        $profiles = Profile::included();
+            // ->filter()
+            // ->sort()
+            // ->getOrPaginate();
 
         return response()->json($profiles);
     }
