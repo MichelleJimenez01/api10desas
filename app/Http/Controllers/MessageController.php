@@ -3,64 +3,61 @@
 namespace App\Http\Controllers;
 
 use App\Models\Message;
-use App\Http\Requests\StoreMessageRequest;
-use App\Http\Requests\UpdateMessageRequest;
+use Illuminate\Http\Request;
+use Ably\AblyRest;
 
 class MessageController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $messages = Message::included()->filter()->sort()->paginateCustom();
+        return response()->json($messages);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function store(Request $request)
     {
-        //
+        $request->validate([
+            'content' => 'required|string',
+            'sender_profile_id' => 'required|integer|exists:profiles,id_role_user',
+            'receiver_profile_id' => 'required|integer|exists:profiles,id_role_user'
+        ]);
+
+        $message = Message::create([
+            'content' => $request->content,
+            'is_read' => false,
+            'sender_profile_id' => $request->sender_profile_id,
+            'receiver_profile_id' => $request->receiver_profile_id,
+            'profile_id' => $request->sender_profile_id // opcional
+        ]);
+
+        // 🔴 Publicar en Ably
+        $ably = new AblyRest(config('services.ably.key'));
+        $channel = $ably->channel('chat');
+        $channel->publish('new-message', $message);
+
+        return response()->json($message, 201);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreMessageRequest $request)
+    public function show($id)
     {
-        //
+        $message = Message::included()->findOrFail($id);
+        return response()->json($message);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Message $message)
+    public function update(Request $request, $id)
     {
-        //
+        $message = Message::findOrFail($id);
+
+        $message->update($request->only(['content', 'is_read']));
+
+        return response()->json($message);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Message $message)
+    public function destroy($id)
     {
-        //
-    }
+        $message = Message::findOrFail($id);
+        $message->delete();
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateMessageRequest $request, Message $message)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Message $message)
-    {
-        //
+        return response()->json(null, 204);
     }
 }

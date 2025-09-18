@@ -36,7 +36,7 @@ class ProfileSeeder extends Seeder
                     'user_id'  => $user->id,
                     'role_id'  => $roles->random()->id,
                     'password' => $defaultPassword,
-                    'photo'    => $defaultPhoto,
+                    'photo'    => $defaultPhoto,    
                 ]);
             }
         }

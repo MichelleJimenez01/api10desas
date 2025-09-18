@@ -6,20 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('notifications', function (Blueprint $table) {
-            $table->id();
+            $table->id('notification_id'); // PK
+            $table->string('event_notification'); // tipo o evento
+
+            // Relación con publicaciones
+            $table->unsignedBigInteger('publication_id'); // FK
+
             $table->timestamps();
+
+            // Clave foránea
+            $table->foreign('publication_id')->references('publication_id')->on('publications')->onDelete('cascade');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('notifications');

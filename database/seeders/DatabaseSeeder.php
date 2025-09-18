@@ -14,8 +14,8 @@ class DatabaseSeeder extends Seeder
     {
          // Llamar a los seeders que creaste
         $this->call([
-            RoleSeeder::class,
             UserSeeder::class,
+            RoleSeeder::class,
             ProfileSeeder::class,
             CategorySeeder::class,
             PublicationSeeder::class,
