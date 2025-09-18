@@ -13,6 +13,14 @@ return new class extends Migration
     {
         Schema::create('publications', function (Blueprint $table) {
             $table->id();
+            $table->string('title');
+            $table->string('type');
+            $table->string('severity');
+            $table->string('location');
+            $table->text('description');
+            $table->string('url_imagen')->nullable();
+            $table->dateTime('date');
+            $table->foreignId('profile_id')->constrained('profiles')->cascadeOnDelete();
             $table->timestamps();
         });
     }
