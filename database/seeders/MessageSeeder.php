@@ -14,7 +14,7 @@ class MessageSeeder extends Seeder
             'is_read' => false,
             'sender_profile_id' => 1,
             'receiver_profile_id' => 2,
-            'profile_id' => 1,
+            
         ]);
 
         Message::create([
@@ -22,7 +22,7 @@ class MessageSeeder extends Seeder
             'is_read' => false,
             'sender_profile_id' => 2,
             'receiver_profile_id' => 1,
-            'profile_id' => 2,
+            
         ]);
 
         Message::create([
@@ -30,7 +30,7 @@ class MessageSeeder extends Seeder
             'is_read' => true,
             'sender_profile_id' => 1,
             'receiver_profile_id' => 2,
-            'profile_id' => 1,
+           
         ]);
     }
 }

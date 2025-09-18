@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('notifications', function (Blueprint $table) {
-            $table->id('notification_id'); // PK
+            $table->id(); 
             $table->string('event_notification'); // tipo o evento
 
             // Relación con publicaciones
@@ -18,7 +18,7 @@ return new class extends Migration
             $table->timestamps();
 
             // Clave foránea
-            $table->foreign('publication_id')->references('publication_id')->on('publications')->onDelete('cascade');
+            $table->foreign('publication_id')->references('id')->on('publications')->onDelete('cascade');
         });
     }
 

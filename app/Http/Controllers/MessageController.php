@@ -27,7 +27,7 @@ class MessageController extends Controller
             'is_read' => false,
             'sender_profile_id' => $request->sender_profile_id,
             'receiver_profile_id' => $request->receiver_profile_id,
-            'profile_id' => $request->sender_profile_id // opcional
+            
         ]);
 
         // 🔴 Publicar en Ably

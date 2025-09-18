@@ -17,11 +17,10 @@ class Message extends Model
         'is_read',
         'sender_profile_id',
         'receiver_profile_id',
-        'profile_id'
     ];
 
     // Listas blancas
-    protected $allowIncluded = ['sender', 'receiver', 'profile'];
+    protected $allowIncluded = ['sender', 'receiver'];
     protected $allowFilter = ['message_id', 'content', 'is_read'];
     protected $allowSort = ['message_id', 'created_at'];
     protected $allowPagination = 10;
@@ -37,10 +36,6 @@ class Message extends Model
         return $this->belongsTo(Profile::class, 'receiver_profile_id', 'id_role_user');
     }
 
-    public function profile()
-    {
-        return $this->belongsTo(Profile::class, 'profile_id', 'id_role_user');
-    }
 
     // 📌 Scope: incluir relaciones
     public function scopeIncluded(Builder $query)
