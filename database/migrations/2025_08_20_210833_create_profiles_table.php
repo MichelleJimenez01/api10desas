@@ -17,7 +17,9 @@ return new class extends Migration
         $table->string('photo')->default('default.jpg');
         $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
         $table->foreignId('role_id')->constrained('roles')->cascadeOnDelete();
+        
         $table->timestamps();
+
     });
     }
 

@@ -17,8 +17,9 @@ class Profile extends Model
         'role_id',
     ];
 
-    // Listas blancas (mismo patrón que Category)
-    protected $allowIncluded = ['user', 'role', 'publications', 'sentMessages', 'receivedMessages', 'messages'];
+
+    // Listas blancas 
+    protected $allowIncluded = ['user', 'role'];
     protected $allowFilter   = ['id', 'user_id', 'role_id'];
     protected $allowSort     = ['id', 'user_id', 'role_id', 'created_at', 'updated_at'];
 
