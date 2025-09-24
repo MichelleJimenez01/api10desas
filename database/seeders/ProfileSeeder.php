@@ -41,18 +41,10 @@ class ProfileSeeder extends Seeder
             }
         }
 
-<<<<<<< Updated upstream
+
         // 5. Mensaje de confirmación
         $count = Profile::count();
         $this->command->info("✅ Se crearon {$count} perfiles exitosamente.");
-=======
-        Profile::create([
-            'photo' => 'Nueva foto subida 3',
-            'user_id' => $users[2]->id,
-            'role_id' => $roles[2]->id,
-        
-            
-        ]);
->>>>>>> Stashed changes
+
     }
 }
