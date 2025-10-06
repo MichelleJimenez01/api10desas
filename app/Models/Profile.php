@@ -9,10 +9,12 @@ use Illuminate\Database\Eloquent\Builder;
 class Profile extends Model
 {
     use HasFactory;
-
+   
     protected $fillable = [
-        'password',
+        
         'photo',
+        'phone',
+        'vereda',
         'user_id',
         'role_id',
     ];
@@ -20,10 +22,10 @@ class Profile extends Model
 
     // Listas blancas 
     protected $allowIncluded = ['user', 'role'];
-    protected $allowFilter   = ['id', 'user_id', 'role_id'];
-    protected $allowSort     = ['id', 'user_id', 'role_id', 'created_at', 'updated_at'];
+    protected $allowFilter   = ['id','photo','phone','vereda','user_id','role_id'];
+    protected $allowSort     = ['id','photo','phone','vereda','user_id','role_id','created_at','updated_at'];
 
-    /* ---------- RELACIONES (según migraciones) ---------- */
+    /* ---------- RELACIONES ---------- */
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
@@ -54,7 +56,7 @@ class Profile extends Model
         return $this->hasMany(Message::class, 'profile_id');
     }
 
-    /* ---------- SCOPES  ---------- */
+    /* ---------- SCOPES ---------- */
     public function scopeIncluded(Builder $query)
     {
         if (empty($this->allowIncluded) || empty(request('included'))) return;
@@ -78,7 +80,12 @@ class Profile extends Model
 
         foreach ($filters as $field => $value) {
             if ($allowFilter->contains($field)) {
-                $query->where($field, 'LIKE', "%$value%");
+                // Para integer, mejor usar comparación exacta
+                if ($field === 'phone' || $field === 'id' || $field === 'user_id' || $field === 'role_id') {
+                    $query->where($field, $value);
+                } else {
+                    $query->where($field, 'LIKE', "%$value%");
+                }
             }
         }
     }

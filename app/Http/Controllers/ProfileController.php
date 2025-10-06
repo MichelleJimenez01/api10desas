@@ -10,52 +10,72 @@ class ProfileController extends Controller
     
     public function index()
     {
-        $profiles = Profile::included();
-            // ->filter()
-            // ->sort()
-            // ->getOrPaginate();
+        $profiles = Profile::included()
+            ->filter()
+            ->sort()
+            ->getOrPaginate();
 
-        return response()->json($profiles);
+        return response()->json([
+            'status' => 'success',
+            'data' => $profiles
+        ], 200);
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'password' => 'required|string|min:6',
+        $validated = $request->validate([
             'photo'    => 'nullable|string',
+            'phone'    => 'nullable|integer', 
+            'vereda'   => 'required|string',
             'user_id'  => 'required|exists:users,id',
             'role_id'  => 'required|exists:roles,id',
         ]);
 
-        $profile = Profile::create($request->all());
+        $profile = Profile::create($validated);
 
-        return response()->json($profile, 201);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Profile created successfully',
+            'data' => $profile
+        ], 201);
     }
 
     public function show($id)
     {
         $profile = Profile::included()->findOrFail($id);
-        return response()->json($profile);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $profile
+        ], 200);
     }
 
     public function update(Request $request, Profile $profile)
     {
-        $request->validate([
-            'password' => 'sometimes|string|min:6',
+        $validated = $request->validate([
             'photo'    => 'nullable|string',
+            'phone'    => 'nullable|integer', 
+            'vereda'   => 'required|string',
             'user_id'  => 'sometimes|exists:users,id',
             'role_id'  => 'sometimes|exists:roles,id',
         ]);
 
-        $profile->update($request->all());
+        $profile->update($validated);
 
-        return response()->json($profile);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Profile updated successfully',
+            'data' => $profile
+        ], 200);
     }
 
     public function destroy(Profile $profile)
     {
         $profile->delete();
-        return response()->json($profile);
-    }
 
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Profile deleted successfully'
+        ], 200);
+    }
 }
