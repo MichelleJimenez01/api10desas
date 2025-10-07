@@ -10,6 +10,8 @@ class Profile extends Model
 {
     use HasFactory;
    
+    // Campos que pueden ser llenados en masa
+
     protected $fillable = [
         
         'photo',
@@ -19,13 +21,13 @@ class Profile extends Model
         'role_id',
     ];
 
-
-    // Listas blancas 
-    protected $allowIncluded = ['user', 'role'];
+    // Listas blancas — definen lo que se puede incluir, filtrar u ordenar
+    protected $allowIncluded = ['user', 'role', 'publications', 'sentMessages', 'receivedMessages'];
     protected $allowFilter   = ['id','photo','phone','vereda','user_id','role_id'];
     protected $allowSort     = ['id','photo','phone','vereda','user_id','role_id','created_at','updated_at'];
 
     /* ---------- RELACIONES ---------- */
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
@@ -57,6 +59,8 @@ class Profile extends Model
     }
 
     /* ---------- SCOPES ---------- */
+    
+    // Incluir relaciones dinámicamente con ?included=role,user
     public function scopeIncluded(Builder $query)
     {
         if (empty($this->allowIncluded) || empty(request('included'))) return;
@@ -71,6 +75,7 @@ class Profile extends Model
         $query->with($relations);
     }
 
+    // Permitir filtros dinámicos ?filter[vereda]=Centro
     public function scopeFilter(Builder $query)
     {
         if (empty($this->allowFilter) || empty(request('filter'))) return;
@@ -80,8 +85,7 @@ class Profile extends Model
 
         foreach ($filters as $field => $value) {
             if ($allowFilter->contains($field)) {
-                // Para integer, mejor usar comparación exacta
-                if ($field === 'phone' || $field === 'id' || $field === 'user_id' || $field === 'role_id') {
+                if (in_array($field, ['id', 'phone', 'user_id', 'role_id'])) {
                     $query->where($field, $value);
                 } else {
                     $query->where($field, 'LIKE', "%$value%");
@@ -90,6 +94,7 @@ class Profile extends Model
         }
     }
 
+    // Permitir orden dinámico ?sort=-created_at
     public function scopeSort(Builder $query)
     {
         if (empty($this->allowSort) || empty(request('sort'))) return;
@@ -109,6 +114,7 @@ class Profile extends Model
         }
     }
 
+    // Obtener todo o paginar dinámicamente ?perPage=10
     public function scopeGetOrPaginate(Builder $query)
     {
         if (request('perPage')) {
