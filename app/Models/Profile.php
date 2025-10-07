@@ -13,7 +13,7 @@ class Profile extends Model
     // Campos que pueden ser llenados en masa
 
     protected $fillable = [
-        
+
         'photo',
         'phone',
         'vereda',
@@ -21,6 +21,7 @@ class Profile extends Model
         'role_id',
     ];
 
+    
     // Listas blancas — definen lo que se puede incluir, filtrar u ordenar
     protected $allowIncluded = ['user', 'role', 'publications', 'sentMessages', 'receivedMessages'];
     protected $allowFilter   = ['id','photo','phone','vereda','user_id','role_id'];

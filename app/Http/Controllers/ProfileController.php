@@ -10,6 +10,7 @@ class ProfileController extends Controller
     
    public function index()
     {
+        
         $profiles = Profile::included()
         ->filter()
         ->sort()
