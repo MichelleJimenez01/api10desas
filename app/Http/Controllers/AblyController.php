@@ -14,7 +14,7 @@ class AblyController extends Controller
     {
         try {
             // Crear cliente Ably con tu API Key desde .env
-            $ably = new AblyRest(env('KjUHEw.g4QvYw:6WIXqjibViuRbYbm-2-ZoLidx7EBnWaOd-6dXxCpDak'));
+            $ably = new AblyRest(env('ABLY_API_KEY'));
 
             // Crear token seguro (válido por defecto 1 hora)
             $tokenRequest = $ably->auth->createTokenRequest(['clientId' => 'frontend-client']);
@@ -38,7 +38,7 @@ class AblyController extends Controller
         ]);
 
         try {
-            $ably = new AblyRest(env('KjUHEw.g4QvYw:6WIXqjibViuRbYbm-2-ZoLidx7EBnWaOd-6dXxCpDak'));
+            $ably = new AblyRest(env('ABLY_API_KEY'));
             $channel = $ably->channel($request->input('canal'));
 
             $channel->publish('alerta', $request->input('mensaje'));
