@@ -87,23 +87,24 @@ class UserController extends Controller
         return response()->json(['message' => 'Usuario eliminado'], 200);
     }
 
-    // Login de usuario
-    public function login(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+// Login de usuario
+public function login(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required',
+    ]);
 
-        $user = User::where('email', $request->email)->first();
-        if (!$user) {
-            return response()->json(['message' => 'Usuario no encontrado'], 404);
-        }
+    $user = User::where('email', $request->email)->first();
 
-        if (!Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => 'Contraseña incorrecta'], 401);
-        }
-
-        return response()->json($user, 200);
+    if (!$user || !Hash::check($request->password, $user->password)) {
+        return response()->json(['message' => 'Credenciales incorrectas'], 401);
     }
+
+    return response()->json([
+        'message' => 'Login exitoso',
+        'user' => $user
+    ], 200);
+}
+
 }
