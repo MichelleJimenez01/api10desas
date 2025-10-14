@@ -5,87 +5,77 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
+
 
 class UserController extends Controller
 {
-    // Método para listar todos los usuarios
+    // Listar todos los usuarios
     public function index()
     {
-  
-    
-      //  $users = User::included()->filter()->sort()->getOrPaginate();
-       // return response()->json($users);
-    
-        // return response()->json (User::all());
-        //return response()->json(User::all(), 200);
-    //    $users = User::included()->filter()->get();
-       // return response()->json($users);
-        // Recupera todos los usuarios con relaciones incluidas
-        $users = User::included()->get();
-
-        // Aplica filtros si están definidos en la query y vuelve a obtener usuarios
-    //    $users = User::included()->filter()->get();
-
-        // Retorna la lista de usuarios en formato JSON
-       return response()->json($users);
-
-       
+        $users = User::all();
+        return response()->json($users);
     }
 
-    /**
-     * Guarda un nuevo usuario en la base de datos.
-     */
+    // Registrar nuevo usuario
     public function store(Request $request)
     {
         $request->validate([
             'firstname' => 'required|max:255',
             'lastname'  => 'required|max:255',
-            'email'     => 'required|max:255',
+            'email'     => 'required|email|unique:users,email',
             'location'  => 'required|max:255',
             'password'  => 'required|max:255',
         ]);
 
-        $user = User::create($request->all());
+        $user = User::create([
+            'firstname' => $request->firstname,
+            'lastname'  => $request->lastname,
+            'email'     => $request->email,
+            'location'  => $request->location,
+            'password'  => Hash::make($request->password),
+        ]);
 
-        return response()->json($user);
+        return response()->json($user, 201);
     }
 
-    /**
-     * Muestra un usuario específico por su ID.
-     */
+    // Mostrar un usuario
     public function show($id)
     {
         $user = User::findOrFail($id);
         return response()->json($user);
     }
 
-    // Actualiza los datos de un usuario existente 
-   public function update(Request $request, $id)
-{
-    $request->validate([
-        'firstname' => 'required|max:255',
-        'lastname'  => 'required|max:255',
-        'email'     => 'required|max:255',
-        'location'  => 'required|max:255',
-        'password'  => 'required|max:255',
-    ]);
+    // Actualizar usuario
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'firstname' => 'required|max:255',
+            'lastname'  => 'required|max:255',
+            'email'     => 'required|email',
+            'location'  => 'required|max:255',
+            'password'  => 'required|max:255',
+        ]);
 
-    $user = User::find($id);
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(['message' => 'Usuario no encontrado'], 404);
+        }
 
-    if (!$user) {
-        return response()->json(['message' => 'Usuario no encontrado'], 404);
+        $user->update([
+            'firstname' => $request->firstname,
+            'lastname'  => $request->lastname,
+            'email'     => $request->email,
+            'location'  => $request->location,
+            'password'  => Hash::make($request->password),
+        ]);
+
+        return response()->json($user, 200);
     }
 
-    $user->update($request->all());
-
-    return response()->json($user, 200);
-}
-
-    // Elimina un usuario de la base de datos
-
+    // Eliminar usuario
     public function destroy($id)
     {
+       
         $user = User::find($id);
 
         if (!$user) {
@@ -93,8 +83,27 @@ class UserController extends Controller
         }
 
         $user->delete();
-
+        
         return response()->json(['message' => 'Usuario eliminado'], 200);
     }
 
+    // Login de usuario
+    public function login(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+        if (!$user) {
+            return response()->json(['message' => 'Usuario no encontrado'], 404);
+        }
+
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json(['message' => 'Contraseña incorrecta'], 401);
+        }
+
+        return response()->json($user, 200);
+    }
 }

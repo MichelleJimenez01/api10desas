@@ -28,3 +28,4 @@ Route::apiResource('notifications', NotificationController::class);
 
 Route::get('ably/auth', [AblyController::class, 'auth']);
 Route::post('ably/send', [AblyController::class, 'sendMessage']);
+Route::post('/users/login', [UserController::class, 'login']);
