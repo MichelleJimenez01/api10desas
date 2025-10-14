@@ -105,7 +105,28 @@ public function login(Request $request)
         'message' => 'Login exitoso',
         'user' => $user
     ], 200);
+
     
+    try {
+    $user = User::where('email', $request->email)->first();
+
+    if (!$user || !Hash::check($request->password, $user->password)) {
+        return response()->json(['message' => 'Credenciales incorrectas'], 401);
+    }
+
+    return response()->json([
+        'message' => 'Login exitoso',
+        'user' => $user
+    ], 200);
+
+} catch (\Exception $e) {
+    return response()->json([
+        'message' => 'Error interno',
+        'error' => $e->getMessage()
+    ], 500);
 }
+
+}
+
 
 }
