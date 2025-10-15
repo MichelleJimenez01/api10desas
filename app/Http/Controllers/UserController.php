@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-
 
 class UserController extends Controller
 {
@@ -16,7 +14,7 @@ class UserController extends Controller
         return response()->json($users);
     }
 
-    // Registrar nuevo usuario
+    // Registrar nuevo usuario (sin Hash::make)
     public function store(Request $request)
     {
         $request->validate([
@@ -32,7 +30,7 @@ class UserController extends Controller
             'lastname'  => $request->lastname,
             'email'     => $request->email,
             'location'  => $request->location,
-            'password'  => Hash::make($request->password),
+            'password'  => $request->password, // guardamos en texto plano
         ]);
 
         return response()->json($user, 201);
@@ -66,7 +64,7 @@ class UserController extends Controller
             'lastname'  => $request->lastname,
             'email'     => $request->email,
             'location'  => $request->location,
-            'password'  => Hash::make($request->password),
+            'password'  => $request->password, // texto plano
         ]);
 
         return response()->json($user, 200);
@@ -75,7 +73,6 @@ class UserController extends Controller
     // Eliminar usuario
     public function destroy($id)
     {
-       
         $user = User::find($id);
 
         if (!$user) {
@@ -83,37 +80,35 @@ class UserController extends Controller
         }
 
         $user->delete();
-        
+
         return response()->json(['message' => 'Usuario eliminado'], 200);
     }
 
-    
-public function login(Request $request)
-{
-    try {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+    // Login de usuario (comparación directa)
+    public function login(Request $request)
+    {
+        try {
+            $request->validate([
+                'email' => 'required|email',
+                'password' => 'required',
+            ]);
 
-        $user = User::where('email', $request->email)->first();
+            $user = User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => 'Credenciales incorrectas'], 401);
+            if (!$user || $request->password !== $user->password) {
+                return response()->json(['message' => 'Credenciales incorrectas'], 401);
+            }
+
+            return response()->json([
+                'message' => 'Login exitoso',
+                'user' => $user
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error interno',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'message' => 'Login exitoso',
-            'user' => $user
-        ], 200);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'Error interno',
-            'error' => $e->getMessage()
-        ], 500);
     }
-}
-
-
 }
