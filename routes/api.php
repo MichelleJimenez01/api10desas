@@ -32,4 +32,6 @@ Route::post('ably/send', [AblyController::class, 'sendMessage']);
 Route::post('/users/login', [UserController::class, 'login']);
 Route::get('/users/login', [UserController::class, 'login']);
 
+Route::get('/profiles/user/{userId}', [ProfileController::class, 'getProfileByUserId']);
+
 
