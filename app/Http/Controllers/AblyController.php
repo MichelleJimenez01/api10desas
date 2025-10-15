@@ -7,19 +7,19 @@ use Ably\AblyRest;
 
 class AblyController extends Controller
 {
-    /**
-     * Genera un token seguro para clientes (React, Android, etc.)
-     */
     public function auth()
     {
         try {
-            // Crear cliente Ably con tu API Key desde .env
-            $ably = new AblyRest(env('ABLY_API_KEY'));
+            $ably = new AblyRest([
+                'key' => env('ABLY_KEY')
+            ]);
 
-            // Crear token seguro (válido por defecto 1 hora)
-            $tokenRequest = $ably->auth->createTokenRequest(['clientId' => 'frontend-client']);
+            $tokenRequest = $ably->auth->createTokenRequest([
+                'clientId' => 'frontend-client'
+            ]);
 
             return response()->json($tokenRequest);
+            
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Error generando token: ' . $e->getMessage()
@@ -27,9 +27,6 @@ class AblyController extends Controller
         }
     }
 
-    /**
-     * Publica un mensaje en un canal específico
-     */
     public function sendMessage(Request $request)
     {
         $request->validate([
@@ -38,15 +35,18 @@ class AblyController extends Controller
         ]);
 
         try {
-            $ably = new AblyRest(env('ABLY_API_KEY'));
-            $channel = $ably->channel($request->input('canal'));
-
+            $ably = new AblyRest([
+                'key' => env('ABLY_KEY')
+            ]);
+            
+            $channel = $ably->channels->get($request->input('canal'));
             $channel->publish('alerta', $request->input('mensaje'));
 
             return response()->json([
                 'success' => true,
                 'message' => 'Mensaje enviado al canal ' . $request->input('canal')
             ]);
+            
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Error enviando mensaje: ' . $e->getMessage()
