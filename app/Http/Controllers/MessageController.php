@@ -13,8 +13,8 @@ class MessageController extends Controller
     public function index()
     {
         $messages = Message::query()
-            ->orderBy('created_at', 'asc')
-            ->paginate(10);
+    ->orderBy('created_at', 'asc')
+    ->get();
 
         return response()->json($messages);
     }
