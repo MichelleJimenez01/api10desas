@@ -6,17 +6,24 @@ return [
     |--------------------------------------------------------------------------
     | Cross-Origin Resource Sharing (CORS) Configuration
     |--------------------------------------------------------------------------
+    |
+    | Configuración de CORS para permitir que el frontend (Laravel + React)
+    | local se comunique con la API alojada en Railway.
+    |
     */
 
-    // Aplica CORS solo a rutas API (más seguro que usar '*')
-    'paths' => ['api/*', 'api/v1/*', 'sanctum/csrf-cookie'],
+    'paths' => [
+        'api/*',
+        'api/v1/*',
+        'sanctum/csrf-cookie',
+    ],
 
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        env('FRONTEND_URL', 'http://127.0.0.1:8000'), // frontend Laravel + React
-        'http://localhost:8000',                      // alternativa
-        'http://localhost:3000',                      // por si en algún momento lo sirves en React puro
+        env('FRONTEND_URL', 'http://127.0.0.1:8000'), // Laravel local
+        'http://localhost:8000',                      // alternativa localhost
+        'http://localhost:3000',                      // si usas Vite o React puro
     ],
 
     'allowed_origins_patterns' => [],
