@@ -8,9 +8,12 @@ use Ably\AblyRest;
 
 class MessageController extends Controller
 {
-    public function index()
+     public function index()
     {
-        $messages = Message::included()->filter()->sort()->paginateCustom();
+        $messages = Message::query()
+            ->orderBy('created_at', 'asc')
+            ->paginate(10);
+
         return response()->json($messages);
     }
 
@@ -18,16 +21,15 @@ class MessageController extends Controller
     {
         $request->validate([
             'content' => 'required|string',
-            'sender_profile_id' => 'required|integer|exists:profiles,id_role_user',
-            'receiver_profile_id' => 'required|integer|exists:profiles,id_role_user'
+            'sender_profile_id' => 'required|integer|exists:profiles,id',
+            'receiver_profile_id' => 'required|integer|exists:profiles,id',
         ]);
-
         $message = Message::create([
             'content' => $request->content,
             'is_read' => false,
             'sender_profile_id' => $request->sender_profile_id,
             'receiver_profile_id' => $request->receiver_profile_id,
-            
+            'is_admin_message' => false,
         ]);
 
         // 🔴 Publicar en Ably

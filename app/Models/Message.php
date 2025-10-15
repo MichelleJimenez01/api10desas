@@ -28,12 +28,13 @@ class Message extends Model
     // Relaciones
     public function sender()
     {
-        return $this->belongsTo(Profile::class, 'sender_profile_id', 'id_role_user');
+        return $this->belongsTo(Profile::class, 'sender_profile_id', 'id');
     }
+
 
     public function receiver()
     {
-        return $this->belongsTo(Profile::class, 'receiver_profile_id', 'id_role_user');
+        return $this->belongsTo(Profile::class, 'receiver_profile_id', 'id');
     }
 
 
