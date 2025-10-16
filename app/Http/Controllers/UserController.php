@@ -97,7 +97,7 @@ class UserController extends Controller
         return response()->json(['message' => 'Usuario eliminado'], 200);
     }
 
-    // 🔐 LOGIN CORREGIDO
+    // 🔐 LOGIN SIN BCRYPT (Solo comparación directa)
     public function login(Request $request)
     {
         try {
@@ -113,24 +113,8 @@ class UserController extends Controller
                 return response()->json(['message' => 'Usuario no encontrado'], 404);
             }
 
-            // ⚠️ MANEJO DE CONTRASEÑAS EN TEXTO PLANO (temporal)
-            $isPasswordValid = false;
-
-            // Si la contraseña NO empieza con $2y$ es texto plano
-            if (!str_starts_with($user->password, '$2y$')) {
-                // Comparación directa (texto plano)
-                if ($user->password === $credentials['password']) {
-                    // ✅ Rehashear automáticamente
-                    $user->password = Hash::make($credentials['password']);
-                    $user->save();
-                    $isPasswordValid = true;
-                }
-            } else {
-                // Verificación normal con Bcrypt
-                $isPasswordValid = Hash::check($credentials['password'], $user->password);
-            }
-
-            if (!$isPasswordValid) {
+            // ⚠️ COMPARACIÓN DIRECTA DE CONTRASEÑAS (sin hash)
+            if ($user->password !== $credentials['password']) {
                 return response()->json(['message' => 'Contraseña incorrecta'], 401);
             }
 
