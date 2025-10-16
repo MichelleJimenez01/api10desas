@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -14,7 +15,7 @@ class UserController extends Controller
         return response()->json($users);
     }
 
-    // Registrar nuevo usuario (sin Hash::make)
+    // Registrar nuevo usuario (CON HASH)
     public function store(Request $request)
     {
         $request->validate([
@@ -22,7 +23,7 @@ class UserController extends Controller
             'lastname'  => 'required|max:255',
             'email'     => 'required|email|unique:users,email',
             'location'  => 'required|max:255',
-            'password'  => 'required|max:255',
+            'password'  => 'required|min:6|max:255',
         ]);
 
         $user = User::create([
@@ -30,10 +31,13 @@ class UserController extends Controller
             'lastname'  => $request->lastname,
             'email'     => $request->email,
             'location'  => $request->location,
-            'password'  => $request->password, // guardamos en texto plano
+            'password'  => Hash::make($request->password), // ✅ HASHEADO
         ]);
 
-        return response()->json($user, 201);
+        return response()->json([
+            'message' => 'Usuario creado exitosamente',
+            'user' => $user
+        ], 201);
     }
 
     // Mostrar un usuario
@@ -51,7 +55,7 @@ class UserController extends Controller
             'lastname'  => 'required|max:255',
             'email'     => 'required|email',
             'location'  => 'required|max:255',
-            'password'  => 'required|max:255',
+            'password'  => 'nullable|min:6|max:255', // Opcional al actualizar
         ]);
 
         $user = User::find($id);
@@ -59,15 +63,24 @@ class UserController extends Controller
             return response()->json(['message' => 'Usuario no encontrado'], 404);
         }
 
-        $user->update([
+        $data = [
             'firstname' => $request->firstname,
             'lastname'  => $request->lastname,
             'email'     => $request->email,
             'location'  => $request->location,
-            'password'  => $request->password, // texto plano
-        ]);
+        ];
 
-        return response()->json($user, 200);
+        // Solo actualizar contraseña si se envía
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password); // ✅ HASHEADO
+        }
+
+        $user->update($data);
+
+        return response()->json([
+            'message' => 'Usuario actualizado',
+            'user' => $user
+        ], 200);
     }
 
     // Eliminar usuario
@@ -84,49 +97,78 @@ class UserController extends Controller
         return response()->json(['message' => 'Usuario eliminado'], 200);
     }
 
-public function login(Request $request)
-{
-    $credentials = $request->validate([
-        'email' => 'required|email',
-        'password' => 'required|string',
-    ]);
+    // 🔐 LOGIN CORREGIDO
+    public function login(Request $request)
+    {
+        try {
+            $credentials = $request->validate([
+                'email' => 'required|email',
+                'password' => 'required|string',
+            ]);
 
-    // Buscar usuario por correo
-    $user = \App\Models\User::where('email', $credentials['email'])->first();
+            // Buscar usuario por correo
+            $user = User::where('email', $credentials['email'])->first();
 
-    if (!$user || !\Illuminate\Support\Facades\Hash::check($credentials['password'], $user->password)) {
-        return response()->json(['message' => 'Credenciales incorrectas'], 401);
+            if (!$user) {
+                return response()->json(['message' => 'Usuario no encontrado'], 404);
+            }
+
+            // ⚠️ MANEJO DE CONTRASEÑAS EN TEXTO PLANO (temporal)
+            $isPasswordValid = false;
+
+            // Si la contraseña NO empieza con $2y$ es texto plano
+            if (!str_starts_with($user->password, '$2y$')) {
+                // Comparación directa (texto plano)
+                if ($user->password === $credentials['password']) {
+                    // ✅ Rehashear automáticamente
+                    $user->password = Hash::make($credentials['password']);
+                    $user->save();
+                    $isPasswordValid = true;
+                }
+            } else {
+                // Verificación normal con Bcrypt
+                $isPasswordValid = Hash::check($credentials['password'], $user->password);
+            }
+
+            if (!$isPasswordValid) {
+                return response()->json(['message' => 'Contraseña incorrecta'], 401);
+            }
+
+            // Verificar si tiene perfil asociado
+            $profile = $user->profile()->with('role')->first();
+
+            if (!$profile || !$profile->role) {
+                return response()->json(['message' => 'El usuario no tiene asignado un rol'], 401);
+            }
+
+            // Crear token si usas Sanctum (opcional)
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return response()->json([
+                'message' => 'Login exitoso',
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->firstname . ' ' . $user->lastname,
+                    'email' => $user->email,
+                    'role_id' => $profile->role->id, // ✅ Agregado para el frontend
+                ],
+                'profile' => [
+                    'id' => $profile->id,
+                    'vereda' => $profile->vereda,
+                    'phone' => $profile->phone,
+                ],
+                'role' => [
+                    'id' => $profile->role->id,
+                    'name' => $profile->role->name_role,
+                ],
+                'token' => $token,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error en el servidor',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
-
-    // Verificar si tiene perfil asociado
-    $profile = $user->profile()->with('role')->first();
-
-    if (!$profile || !$profile->role) {
-        return response()->json(['message' => 'El usuario no tiene asignado un rol'], 401);
-    }
-
-    // Crear token si usas Sanctum (opcional)
-    $token = $user->createToken('auth_token')->plainTextToken;
-
-    return response()->json([
-        'message' => 'Login exitoso',
-        'user' => [
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-        ],
-        'profile' => [
-            'id' => $profile->id,
-            'vereda' => $profile->vereda,
-            'phone' => $profile->phone,
-        ],
-        'role' => [
-            'id' => $profile->role->id,
-            'name' => $profile->role->name_role,
-        ],
-        'token' => $token ?? null,
-    ], 200);
-}
-
-
 }
