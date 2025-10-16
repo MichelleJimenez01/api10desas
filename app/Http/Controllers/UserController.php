@@ -88,36 +88,45 @@ public function login(Request $request)
 {
     try {
         $request->validate([
+            'email' => 'required|email',
             'password' => 'required',
-            'email' => 'nullable|email',
-            'id' => 'nullable|integer',
         ]);
 
-        // Buscar usuario por email o ID
-        if ($request->email) {
-            $user = User::where('email', $request->email)->first();
-        } elseif ($request->id) {
-            $user = User::find($request->id);
-        } else {
-            return response()->json(['message' => 'Debes enviar email o id'], 400);
-        }
+        // Buscar usuario por email
+        $user = User::where('email', $request->email)->first();
 
         // Verificar usuario y contraseña
         if (!$user || $request->password !== $user->password) {
             return response()->json(['message' => 'Credenciales incorrectas'], 401);
         }
 
+        // Validar que tenga un rol
+        if (!$user->role_id) {
+            return response()->json(['message' => 'El usuario no tiene asignado un rol'], 403);
+        }
+
+        // Generar un "token" falso para mantener compatibilidad con tu frontend
+        $token = base64_encode(random_bytes(32));
+
+        // Retornar usuario con su rol
         return response()->json([
             'message' => 'Login exitoso',
-            'user' => $user
+            'token' => $token,
+            'user' => [
+                'id' => $user->id,
+                'firstname' => $user->firstname,
+                'lastname' => $user->lastname,
+                'email' => $user->email,
+                'location' => $user->location,
+                'role_id' => $user->role_id, // 👈 se envía el rol aquí
+            ],
         ], 200);
 
     } catch (\Exception $e) {
         return response()->json([
-            'message' => 'Error interno',
-            'error' => $e->getMessage()
+            'message' => 'Error interno del servidor',
+            'error' => $e->getMessage(),
         ], 500);
     }
 }
-
 }
