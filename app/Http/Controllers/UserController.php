@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -15,7 +14,7 @@ class UserController extends Controller
         return response()->json($users);
     }
 
-    // Registrar nuevo usuario (CON HASH)
+    // Registrar nuevo usuario (sin Hash::make)
     public function store(Request $request)
     {
         $request->validate([
@@ -23,7 +22,7 @@ class UserController extends Controller
             'lastname'  => 'required|max:255',
             'email'     => 'required|email|unique:users,email',
             'location'  => 'required|max:255',
-            'password'  => 'required|min:6|max:255',
+            'password'  => 'required|max:255',
         ]);
 
         $user = User::create([
@@ -31,13 +30,10 @@ class UserController extends Controller
             'lastname'  => $request->lastname,
             'email'     => $request->email,
             'location'  => $request->location,
-            'password'  => Hash::make($request->password), // ✅ HASHEADO
+            'password'  => $request->password, // guardamos en texto plano
         ]);
 
-        return response()->json([
-            'message' => 'Usuario creado exitosamente',
-            'user' => $user
-        ], 201);
+        return response()->json($user, 201);
     }
 
     // Mostrar un usuario
@@ -55,7 +51,7 @@ class UserController extends Controller
             'lastname'  => 'required|max:255',
             'email'     => 'required|email',
             'location'  => 'required|max:255',
-            'password'  => 'nullable|min:6|max:255', // Opcional al actualizar
+            'password'  => 'required|max:255',
         ]);
 
         $user = User::find($id);
@@ -63,24 +59,15 @@ class UserController extends Controller
             return response()->json(['message' => 'Usuario no encontrado'], 404);
         }
 
-        $data = [
+        $user->update([
             'firstname' => $request->firstname,
             'lastname'  => $request->lastname,
             'email'     => $request->email,
             'location'  => $request->location,
-        ];
+            'password'  => $request->password, // texto plano
+        ]);
 
-        // Solo actualizar contraseña si se envía
-        if ($request->filled('password')) {
-            $data['password'] = Hash::make($request->password); // ✅ HASHEADO
-        }
-
-        $user->update($data);
-
-        return response()->json([
-            'message' => 'Usuario actualizado',
-            'user' => $user
-        ], 200);
+        return response()->json($user, 200);
     }
 
     // Eliminar usuario
@@ -97,58 +84,40 @@ class UserController extends Controller
         return response()->json(['message' => 'Usuario eliminado'], 200);
     }
 
-    // 🔐 LOGIN SIN BCRYPT (Solo comparación directa)
-    public function login(Request $request)
-    {
-        try {
-            $credentials = $request->validate([
-                'email' => 'required|email',
-                'password' => 'required|string',
-            ]);
+public function login(Request $request)
+{
+    try {
+        $request->validate([
+            'password' => 'required',
+            'email' => 'nullable|email',
+            'id' => 'nullable|integer',
+        ]);
 
-            // Buscar usuario por correo
-            $user = User::where('email', $credentials['email'])->first();
-
-            if (!$user) {
-                return response()->json(['message' => 'Usuario no encontrado'], 404);
-            }
-
-            // ⚠️ COMPARACIÓN DIRECTA DE CONTRASEÑAS (sin hash)
-            if ($user->password !== $credentials['password']) {
-                return response()->json(['message' => 'Contraseña incorrecta'], 401);
-            }
-
-            // Verificar si tiene perfil asociado
-            $profile = $user->profile()->with('role')->first();
-
-            if (!$profile || !$profile->role) {
-                return response()->json(['message' => 'El usuario no tiene asignado un rol'], 401);
-            }
-
-            return response()->json([
-                'message' => 'Login exitoso',
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->firstname . ' ' . $user->lastname,
-                    'email' => $user->email,
-                    'role_id' => $profile->role->id, // ✅ Agregado para el frontend
-                ],
-                'profile' => [
-                    'id' => $profile->id,
-                    'vereda' => $profile->vereda,
-                    'phone' => $profile->phone,
-                ],
-                'role' => [
-                    'id' => $profile->role->id,
-                    'name' => $profile->role->name_role,
-                ],
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error en el servidor',
-                'error' => $e->getMessage()
-            ], 500);
+        // Buscar usuario por email o ID
+        if ($request->email) {
+            $user = User::where('email', $request->email)->first();
+        } elseif ($request->id) {
+            $user = User::find($request->id);
+        } else {
+            return response()->json(['message' => 'Debes enviar email o id'], 400);
         }
+
+        // Verificar usuario y contraseña
+        if (!$user || $request->password !== $user->password) {
+            return response()->json(['message' => 'Credenciales incorrectas'], 401);
+        }
+
+        return response()->json([
+            'message' => 'Login exitoso',
+            'user' => $user
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Error interno',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
+
 }
