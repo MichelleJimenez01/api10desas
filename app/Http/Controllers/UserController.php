@@ -86,38 +86,47 @@ class UserController extends Controller
 
 public function login(Request $request)
 {
-    try {
-        $request->validate([
-            'password' => 'required',
-            'email' => 'nullable|email',
-            'id' => 'nullable|integer',
-        ]);
+    $credentials = $request->validate([
+        'email' => 'required|email',
+        'password' => 'required|string',
+    ]);
 
-        // Buscar usuario por email o ID
-        if ($request->email) {
-            $user = User::where('email', $request->email)->first();
-        } elseif ($request->id) {
-            $user = User::find($request->id);
-        } else {
-            return response()->json(['message' => 'Debes enviar email o id'], 400);
-        }
+    // Buscar usuario por correo
+    $user = \App\Models\User::where('email', $credentials['email'])->first();
 
-        // Verificar usuario y contraseña
-        if (!$user || $request->password !== $user->password) {
-            return response()->json(['message' => 'Credenciales incorrectas'], 401);
-        }
-
-        return response()->json([
-            'message' => 'Login exitoso',
-            'user' => $user
-        ], 200);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'Error interno',
-            'error' => $e->getMessage()
-        ], 500);
+    if (!$user || !\Illuminate\Support\Facades\Hash::check($credentials['password'], $user->password)) {
+        return response()->json(['message' => 'Credenciales incorrectas'], 401);
     }
+
+    // Verificar si tiene perfil asociado
+    $profile = $user->profile()->with('role')->first();
+
+    if (!$profile || !$profile->role) {
+        return response()->json(['message' => 'El usuario no tiene asignado un rol'], 401);
+    }
+
+    // Crear token si usas Sanctum (opcional)
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    return response()->json([
+        'message' => 'Login exitoso',
+        'user' => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+        ],
+        'profile' => [
+            'id' => $profile->id,
+            'vereda' => $profile->vereda,
+            'phone' => $profile->phone,
+        ],
+        'role' => [
+            'id' => $profile->role->id,
+            'name' => $profile->role->name_role,
+        ],
+        'token' => $token ?? null,
+    ], 200);
 }
+
 
 }
