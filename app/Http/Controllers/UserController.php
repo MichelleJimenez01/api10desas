@@ -125,9 +125,6 @@ class UserController extends Controller
                 return response()->json(['message' => 'El usuario no tiene asignado un rol'], 401);
             }
 
-            // Crear token si usas Sanctum (opcional)
-            $token = $user->createToken('auth_token')->plainTextToken;
-
             return response()->json([
                 'message' => 'Login exitoso',
                 'user' => [
@@ -145,7 +142,6 @@ class UserController extends Controller
                     'id' => $profile->role->id,
                     'name' => $profile->role->name_role,
                 ],
-                'token' => $token,
             ], 200);
 
         } catch (\Exception $e) {
